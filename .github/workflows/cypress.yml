@@ -18,9 +18,17 @@ on:
 
 jobs:
   cypress-run:
-    name: Run Cypress Tests & Generate Report
+    name: Run Cypress Tests (${{ matrix.group }})
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - group: "group-1"
+            specs: "cypress/e2e/01_homepage_and_navigation.cy.js,cypress/e2e/04_dealer_e2e_cart_and_whatsapp_order.cy.js"
+          - group: "group-2"
+            specs: "cypress/e2e/02_product_search_and_filter.cy.js,cypress/e2e/03_guest_request_access.cy.js,cypress/e2e/05_cart_drawer_edge_cases.cy.js"
 
     steps:
       - name: Checkout repository
@@ -32,20 +40,31 @@ jobs:
           node-version: 20
           cache: npm
 
-      - name: Install dependencies
-        run: npm ci || npm install
+      - name: Cache Cypress Binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            cypress-${{ runner.os }}-
 
-      - name: Run Cypress Tests & Generate Report
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Cypress Spec Group & Generate Report
         env:
           CI: true
           BASE_URL: ${{ github.event.inputs.target_url || github.event.client_payload.target_url || secrets.BASE_URL || 'https://ziarakart.vercel.app' }}
-        run: npm run test:ci || npx cypress run --headless --browser chrome
+        run: |
+          npx cypress run --headless --spec "${{ matrix.specs }}" --reporter mochawesome --reporter-options reportDir=cypress/reports/raw,overwrite=false,html=false,json=true
+          npx mochawesome-merge "cypress/reports/raw/*.json" > cypress/reports/output.json
+          npx marge cypress/reports/output.json -f index.html -o cypress/reports/html
 
       - name: Upload Cypress HTML Report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-html-report
+          name: cypress-html-report-${{ matrix.group }}
           path: cypress/reports/html
           retention-days: 15
 
@@ -53,14 +72,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: cypress-screenshots
+          name: cypress-screenshots-${{ matrix.group }}
           path: cypress/screenshots
-          retention-days: 15
-
-      - name: Upload Cypress Videos
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: cypress-videos
-          path: cypress/videos
           retention-days: 15

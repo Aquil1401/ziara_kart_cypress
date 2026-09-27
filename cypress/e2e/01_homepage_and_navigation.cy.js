@@ -31,8 +31,8 @@ describe('ZiaraKart Homepage & Navigation', () => {
   });
 
   it('TC03 - Verify category filter options are rendered in catalog dropdown', () => {
+    cy.get('select option', { timeout: 15000 }).should('have.length.greaterThan', 2);
     homePage.getCategoryOptions().should((options) => {
-      expect(options.length).to.be.greaterThan(2);
       expect(options).to.include('All');
       expect(options).to.include('Toothbrush');
     });
