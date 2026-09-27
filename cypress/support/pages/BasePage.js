@@ -57,7 +57,6 @@ class BasePage {
   waitForProductsToLoad(timeout = 25000) {
     cy.get('div.bg-white.rounded-2xl.shadow', { timeout }).first().should('be.visible');
     cy.contains(/Showing \d+ of \d+ products/i, { timeout }).should('be.visible');
-    cy.wait(500);
   }
 
   /**
@@ -65,7 +64,6 @@ class BasePage {
    */
   searchProduct(term) {
     this.searchInput.clear().type(term);
-    cy.wait(400);
   }
 
   /**
@@ -73,7 +71,6 @@ class BasePage {
    */
   clearSearch() {
     this.searchInput.clear();
-    cy.wait(400);
   }
 
   /**

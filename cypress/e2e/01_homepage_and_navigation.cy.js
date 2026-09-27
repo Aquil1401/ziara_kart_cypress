@@ -7,7 +7,6 @@ describe('ZiaraKart Homepage & Navigation', () => {
   beforeEach(() => {
     homePage = new HomePage();
     homePage.navigate('/');
-    homePage.waitForProductsToLoad();
   });
 
   it('TC01 - Verify page title and brand header metadata', () => {

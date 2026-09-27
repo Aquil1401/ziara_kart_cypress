@@ -27,7 +27,6 @@ class CartDrawer {
   close() {
     this.closeButton.click();
     cy.get('aside.translate-x-full', { timeout: 5000 }).should('exist');
-    cy.wait(300);
   }
 
   /**

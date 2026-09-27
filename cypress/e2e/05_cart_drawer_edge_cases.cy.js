@@ -17,7 +17,6 @@ describe('ZiaraKart Cart Drawer Edge Cases', () => {
     );
 
     homePage.navigate('/');
-    homePage.waitForProductsToLoad();
   });
 
   it('TC14 - Empty cart displays empty message and disabled proceed button', () => {
@@ -31,6 +30,7 @@ describe('ZiaraKart Cart Drawer Edge Cases', () => {
   });
 
   it('TC15 - Decrementing product to zero removes item and resets cart', () => {
+    homePage.waitForProductsToLoad();
     homePage.getVisibleProductTitles().then((titles) => {
       const firstProductName = titles[0];
 

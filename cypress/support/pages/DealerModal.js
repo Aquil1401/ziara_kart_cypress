@@ -62,7 +62,6 @@ class DealerModal {
    */
   close() {
     cy.get('body').type('{esc}');
-    cy.wait(300);
   }
 
   /**

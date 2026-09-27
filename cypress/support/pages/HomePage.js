@@ -19,7 +19,6 @@ class HomePage extends BasePage {
    */
   selectCategory(categoryName) {
     this.categorySelect.should('be.visible').select(categoryName);
-    cy.wait(500);
   }
 
   /**
