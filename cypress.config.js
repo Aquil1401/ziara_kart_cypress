@@ -5,25 +5,24 @@ module.exports = defineConfig({
   reporter: "mochawesome",
 
   reporterOptions: {
-    reportDir: "cypress/reports/raw",   // 👈 RAW JSON HERE
+    reportDir: "cypress/reports/raw",
     overwrite: false,
     html: false,
     json: true
   },
 
+  viewportWidth: 1280,
+  viewportHeight: 720,
+  defaultCommandTimeout: 10000,
+  pageLoadTimeout: 30000,
+  video: false,
+
   e2e: {
-    baseUrl: process.env.BASE_URL || "",
-    env: {
-      username: process.env.USER_EMAIL,
-      password: process.env.USER_PASSWORD
-    },
+    baseUrl: process.env.BASE_URL || "https://ziarakart.vercel.app",
+    supportFile: "cypress/support/e2e.js",
+    specPattern: "cypress/e2e/**/*.cy.js",
 
     setupNodeEvents(on, config) {
-      if (process.env.CI) {
-        if (!config.baseUrl) throw new Error("❌ BASE_URL missing");
-        if (!config.env.username || !config.env.password)
-          throw new Error("❌ USER_EMAIL / USER_PASSWORD missing");
-      }
       return config;
     }
   }

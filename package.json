@@ -1,8 +1,13 @@
 {
-  "name": "cypress-practice",
+  "name": "ziara-kart-cypress",
   "version": "1.0.0",
+  "description": "ZiaraKart UI Automation Framework using Cypress, JavaScript (ES6), and Page Object Model (POM)",
   "private": true,
+  "author": "Md Aquil",
   "scripts": {
+    "test": "cypress run",
+    "test:headed": "cypress run --headed --browser chrome",
+    "test:open": "cypress open",
     "clean:reports": "rimraf cypress/reports",
     "cypress:run": "cypress run --headless --browser chrome --reporter mochawesome",
     "report:merge": "mochawesome-merge \"cypress/reports/raw/*.json\" > cypress/reports/output.json",

@@ -1,106 +1,73 @@
-# Framework Architecture
+# ZiaraKart Test Automation Architecture (POM – Cypress)
 
-This Cypress automation framework is designed using the **Page Object Model (POM)** pattern with a clear and strict separation of responsibilities.
-The goal is to keep tests **readable, maintainable, and scalable** for real-world projects.
-
----
-
-## 🧱 Architecture Layers
-
-### 1️⃣ Tests (E2E Specs)
-- Located in: `cypress/e2e/`
-- Contain **business flows only**
-- No selectors, no test data, no low-level logic
-- Focus on **WHAT** is being tested, not **HOW**
-
-Example:
-- Login flow
-- Product verification flow
-- End-to-end user journeys
+This document describes the Page Object Model (POM) architectural design implemented for **[ZiaraKart](https://ziarakart.vercel.app/)** using **Cypress + JavaScript**.
 
 ---
 
-### 2️⃣ Pages (Page Objects)
-- Located in: `cypress/support/pages/`
-- Encapsulate **page-level actions and assertions**
-- Act as a bridge between tests and UI
-- Reusable across multiple test cases
+## 🏗️ Architectural Overview
 
-Responsibilities:
-- Page navigation
-- User actions (click, type, select)
-- Page-specific validations
+The framework follows a strict 4-layer separation of concerns:
 
----
-
-### 3️⃣ Locators
-- Located in: `cypress/support/locators/`
-- Contain **only UI selectors**
-- No Cypress commands or logic
-- Central place to update selectors when UI changes
-
-Benefits:
-- Single source of truth for selectors
-- Minimal test breakage on UI updates
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     1. Test Specs Layer                     │
+│    (01_homepage, 02_search, 03_guest, 04_dealer, 05_cart)   │
+└──────────────────────────────┬──────────────────────────────┘
+                               │ Calls business actions & assertions
+┌──────────────────────────────▼──────────────────────────────┐
+│                  2. Page Object Model Layer                 │
+│       (BasePage, HomePage, CartDrawer, CheckoutPage, etc.)  │
+└──────────────┬──────────────────────────────┬───────────────┘
+               │ Uses locators                │ Uses data
+┌──────────────▼──────────────┐ ┌─────────────▼───────────────┐
+│      3. Locators Layer      │ │     4. Test Data Layer      │
+│   (*.locators.js files)     │ │    (ziarakart.json fixture) │
+└─────────────────────────────┘ └─────────────────────────────┘
+```
 
 ---
 
-### 4️⃣ Test Data (Fixtures)
-- Located in: `cypress/fixtures/`
-- Store **non-sensitive test data** in JSON format
-- Examples:
-  - User credentials (invalid users)
-  - Expected UI text
-  - Product counts and sort options
+## 🧱 Layer Responsibilities
 
-Benefits:
-- Clear separation of test logic and data
-- Easy data reuse across multiple tests
+### 1. Locators Layer (`cypress/support/locators/`)
+- Pure JavaScript constants storing DOM selectors.
+- Decouples selectors from test actions. If the UI changes, changes are localized to a single file.
+- Files:
+  - `header.locators.js`: Brand logo, navigation links, search input, cart trigger.
+  - `products.locators.js`: Product cards, title, price, blurred prices, action buttons (`Add`, `+`, `−`, `Request Access`).
+  - `cart.locators.js`: Slide-over cart elements, item rows, total calculation, proceed button.
+  - `checkout.locators.js`: Delivery details inputs (shop, owner, phone, address), order summary.
+  - `dealer-modal.locators.js`: Retailer verification modal form inputs and validation errors.
 
----
+### 2. Page Object Model Layer (`cypress/support/pages/`)
+- Encapsulates UI actions, state handling, and dynamic wait strategies.
+- Classes:
+  - **`BasePage.js`**:
+    - Centralized `navigate()` with React hydration checks.
+    - `waitForProductsToLoad()`: Dynamic synchronization waiting for the React catalog to finish loading without brittle sleeps.
+    - `setupDealerAccess()`: Injects `dealerToken` into `localStorage` on window load and intercepts approval verification API.
+    - `openCart()`: Opens slide-over cart drawer.
+  - **`HomePage.js`**:
+    - Category filtering via `<select>` dropdown.
+    - Search input management and live results verification.
+    - Product card interactions (`addProductToCart`, `incrementProductQuantity`, `decrementProductQuantity`).
+    - Detection of blurred vs unblurred wholesale pricing.
+  - **`CartDrawer.js`**:
+    - Handles CSS transform slide-over transitions (`translate-x-0` vs `translate-x-full`).
+    - Reads cart items, totals, and triggers checkout navigation.
+  - **`CheckoutPage.js`**:
+    - Fills delivery details form.
+    - `submitOrderAndInterceptWhatsApp()`: Stubs `window.open` calls to capture and validate the generated WhatsApp order message URL and contents.
+  - **`DealerModal.js`**:
+    - Handles the guest "Request Access" modal and validates form constraints (10-digit phone, email format, mandatory fields).
 
-### 5️⃣ Environment Configuration (ENV)
-- Managed via:
-  - `.env` file
-  - `cypress.config.js`
-- Used for **sensitive data** such as:
-  - Base URL
-  - Login credentials
+### 3. Test Data Layer (`cypress/fixtures/` and `testdata/`)
+- `ziarakart.json`: Centralizes expected titles, valid and invalid form payloads, categories, search queries, and support contact details (`917979720438`).
 
-Principles:
-- No hardcoded secrets in tests
-- Environment-specific configuration support
-- Fail-fast validation in CI (optional)
-
----
-
-## 🔁 Execution Flow
-
-1. Cypress loads configuration and environment variables
-2. Tests trigger high-level business flows
-3. Tests call Page Objects
-4. Page Objects use Locators for UI interaction
-5. Test data is read from Fixtures
-6. Assertions validate expected behavior
-
----
-
-## ✅ Benefits of This Architecture
-
-- ✅ Easy maintenance when UI changes
-- ✅ Highly readable and clean test cases
-- ✅ Scalable for large Cypress projects
-- ✅ Encourages best automation practices
-- ✅ Interview-ready and production-friendly
-- ✅ Clear separation of concerns
-
----
-
-## 🎯 Design Philosophy
-
-> Tests should describe user behavior,
-> Pages should handle UI interaction,
-> Locators should define selectors,
-> Data should live outside test logic.
-
-This philosophy ensures long-term maintainability and team collaboration.
+### 4. Test Specifications Layer (`cypress/e2e/`)
+- Clean, declarative, scenario-driven test files:
+  - `01_homepage_and_navigation.cy.js`: Branding, header, multi-page links, footer.
+  - `02_product_search_and_filter.cy.js`: Keyword search, case-insensitivity, category filtering, zero-results.
+  - `03_guest_request_access.cy.js`: Price blurring, guest restrictions, modal validations.
+  - `04_dealer_e2e_cart_and_whatsapp_order.cy.js`: Full end-to-end purchase and WhatsApp URL payload assertion.
+  - `05_cart_drawer_edge_cases.cy.js`: Empty cart states, removal to zero, proceed button disabled state.
